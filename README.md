@@ -67,3 +67,7 @@ Keep the host's tab open. The same tab remembers its host session ID across refr
 `node scripts/check-invites.mjs` checks public invite generation from localhost, legacy invites in existing tabs, manual joining, refresh/retry, and offline-host errors using fictional data. Set `BOARD_URL=https://mttalarico.github.io/coaching-assignments/` to check the deployed site in isolated browsers.
 
 Live sessions now exchange protocol version 2. If either browser is running an older app, participants must refresh both pages and reconnect; incompatible data is not silently accepted. A rejected incoming snapshot produces a persistent explanation and Retry control instead of a transient invalid-update toast. No local boards are cleared by this update.
+
+## Shared scenario tabs
+
+Every scenario created or duplicated by any connected participant appears as a clickable tab for all participants. Incoming scenarios get a NEW badge and a notification; opening the tab clears that participant's badge. Everyone can browse independently without changing a partner's selected tab. The helper below the tabs confirms how many scenarios are shared. Creation attribution is shown in tab tooltips. Scenarios made outside the live session remain in that browser's separate local board.

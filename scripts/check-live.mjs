@@ -50,6 +50,16 @@ try{
  await guest.getByRole('button',{name:'Duplicate scenario',exact:true}).click();await guest.getByLabel('Scenario name').fill('Test alternative');await guest.getByRole('button',{name:'Create scenario',exact:true}).click();await host.getByRole('button',{name:'Test alternative',exact:true}).waitFor();
  await guest.getByText('No reactions yet. Give this option a little feedback.',{exact:true}).waitFor();
  await host.locator('.reaction-people').getByText('❤️ Test Host',{exact:true}).waitFor();
+ // Every participant gets clickable tabs for both new and duplicated scenarios.
+ await host.getByRole('button',{name:'Test alternative',exact:true}).getByText('NEW',{exact:true}).waitFor();
+ await host.getByRole('button',{name:'Test alternative',exact:true}).click();
+ assert.equal(await host.locator('#scenarioTitle').textContent(),'Test alternative');
+ assert.equal(await host.getByRole('button',{name:'Test alternative',exact:true}).getByText('NEW',{exact:true}).count(),0);
+ await host.getByRole('button',{name:'＋ New scenario',exact:true}).click();await host.getByLabel('Scenario name').fill('Host proposal');await host.getByRole('button',{name:'Create scenario',exact:true}).click();
+ await guest.getByRole('button',{name:'Host proposal',exact:true}).getByText('NEW',{exact:true}).waitFor();
+ await guest.getByRole('button',{name:'Host proposal',exact:true}).click();assert.equal(await guest.locator('#scenarioTitle').textContent(),'Host proposal');
+ assert.equal(await guest.locator('#scenarioSharing').textContent(),'All 3 scenario tabs are shared with everyone in this session. Click any tab to explore it.');
+ await guest.getByRole('button',{name:'Synthetic plan',exact:true}).click();assert.equal(await guest.locator('#scenarioTitle').textContent(),'Synthetic plan');
  await host.screenshot({path:'/private/tmp/coaching-live-session.png',fullPage:true});
  await host.close();await guest.getByText('Host disconnected · Changes paused.',{exact:false}).waitFor();assert.equal(errors.length,0,errors.join('\n'));
  console.log('PASS: real connection with fictional data, partner identity, candidate addition, move, opinion, reactions in both directions, reaction removal, position feedback, reversible Release placement, duplicate without inherited votes, scenario, disconnect, no browser errors.');
