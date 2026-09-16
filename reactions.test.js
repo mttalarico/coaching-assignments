@@ -1,0 +1,7 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {initial,toggleReaction,validate} from './public/model.js';
+import {mergeBoards} from './public/merge.js';
+test('first simultaneous reactions on an older board both survive',()=>{const base=initial();base.profiles.push({id:'partner',name:'Partner'});const a=structuredClone(base),b=structuredClone(base);toggleReaction(a,a.scenarios[0],'matt','love');toggleReaction(b,b.scenarios[0],'partner','sick');const merged=mergeBoards(base,a,b);assert.equal(merged.scenarios[0].reactions.length,2);assert.equal(base.scenarios[0].reactions,undefined);assert.deepEqual(validate(JSON.parse(JSON.stringify(merged))),merged);});
+test('removing one person’s reaction preserves another person’s identical reaction',()=>{const base=initial();base.profiles.push({id:'partner',name:'Partner'});toggleReaction(base,base.scenarios[0],'matt','like');const a=structuredClone(base),b=structuredClone(base);toggleReaction(a,a.scenarios[0],'matt','like');toggleReaction(b,b.scenarios[0],'partner','like');const result=mergeBoards(base,a,b);assert.deepEqual(result.scenarios[0].reactions.map(r=>r.profile),['partner']);});
+test('invalid imported reaction identities and duplicate votes are rejected',()=>{const s=initial();toggleReaction(s,s.scenarios[0],'matt','fire');s.scenarios[0].reactions.push({...s.scenarios[0].reactions[0]});assert.throws(()=>validate(s));s.scenarios[0].reactions.pop();s.scenarios[0].reactions[0].profile='missing';assert.throws(()=>validate(s));});

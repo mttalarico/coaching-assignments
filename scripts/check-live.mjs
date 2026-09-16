@@ -22,8 +22,18 @@ try{
  await host.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();await host.getByLabel('Board position').selectOption({label:'STAFF Roving Coaches — Manager'});await host.getByRole('button',{name:'Save changes'}).click();
  await guest.locator('[data-aff="roving"][data-role="Manager"]').getByRole('button',{name:'Fictional Candidate Manager',exact:true}).waitFor();
  await guest.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();await guest.locator('#opinion').fill('A synthetic discussion note');await guest.getByRole('button',{name:'Save changes'}).click();await host.getByText('commented on Fictional Candidate: “A synthetic discussion note”',{exact:false}).waitFor();
+ // Reactions belong to the current roster and synchronize in both directions.
+ await host.getByRole('button',{name:'Love',exact:true}).click();
+ await guest.locator('.reaction-people').getByText('❤️ Test Host',{exact:true}).waitFor();
+ await guest.getByRole('button',{name:'Sick',exact:true}).click();
+ await host.locator('.reaction-people').getByText('🤘 Test Partner',{exact:true}).waitFor();
+ await guest.getByRole('button',{name:'Sick',exact:true}).click();
+ await host.locator('.reaction-people').getByText('🤘 Test Partner',{exact:true}).waitFor({state:'hidden'});
+ assert.equal(await guest.getByRole('button',{name:'Sick',exact:true}).getAttribute('aria-pressed'),'false');
  await guest.getByRole('button',{name:'Duplicate scenario',exact:true}).click();await guest.getByLabel('Scenario name').fill('Test alternative');await guest.getByRole('button',{name:'Create scenario',exact:true}).click();await host.getByRole('button',{name:'Test alternative',exact:true}).waitFor();
+ await guest.getByText('No reactions yet. Give this option a little feedback.',{exact:true}).waitFor();
+ await host.locator('.reaction-people').getByText('❤️ Test Host',{exact:true}).waitFor();
  await host.screenshot({path:'/private/tmp/coaching-live-session.png',fullPage:true});
  await host.close();await guest.getByText('Host disconnected · Changes paused.',{exact:false}).waitFor();assert.equal(errors.length,0,errors.join('\n'));
- console.log('PASS: real connection with fictional data, partner identity, candidate addition, move, opinion, scenario, disconnect, no browser errors.');
+ console.log('PASS: real connection with fictional data, partner identity, candidate addition, move, opinion, reactions in both directions, reaction removal, duplicate without inherited votes, scenario, disconnect, no browser errors.');
 }catch(e){console.log('Host status:',await host?.locator('#liveStatus').textContent().catch(()=>''));console.log('Guest status:',await guest?.locator('#liveStatus').textContent().catch(()=>''));console.log('Errors:',errors);throw e;}finally{await browser.close();}

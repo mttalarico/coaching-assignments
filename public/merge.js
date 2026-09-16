@@ -4,6 +4,12 @@ export class Conflict extends Error {}
 // Three-way merge: independent edits survive; conflicting edits never silently overwrite.
 export function mergeBoards(base, proposed, current) {
   validate(base); validate(proposed); validate(current);
+  // Older boards have no reactions field; normalize so the first concurrent votes merge.
+  [base, proposed, current] = [base, proposed, current].map(board => {
+    const copy = structuredClone(board);
+    for (const scenario of copy.scenarios) scenario.reactions ??= [];
+    return copy;
+  });
   function merge(a,b,c,path='board') {
     if(equal(a,b))return structuredClone(c);
     if(equal(a,c)||equal(b,c))return structuredClone(b);

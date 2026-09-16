@@ -47,3 +47,7 @@ The host saves the shared result in their local board. Guests save the session u
 ### Checks
 
 `npm test` checks board validation, assignment rules, and concurrent merging. After `npm ci`, `node scripts/check-live.mjs` runs two isolated Chrome sessions using fictional data against the local server and the real signaling service. The script currently uses the macOS Chrome executable path. Tests do not alter a user's browser storage. The browser check covers joining, profile attribution, candidate addition, moves, opinions, scenarios, and disconnect handling.
+
+## Roster reactions
+
+Each scenario has Like 👍, Dislike 👎, Love ❤️, Fire 🔥, Sick 🤘, and Thinking 🤔 reactions. Select your leadership profile, then click one or more emojis. Click again to remove your reaction. Counts and names are visible to everyone in the live session, and scenario tabs show a reaction summary. Reactions stay with a scenario as it is edited; duplicating it starts fresh feedback. Reactions are included in exports and local/session saves. Older boards without reactions remain supported.
