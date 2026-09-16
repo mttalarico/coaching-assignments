@@ -19,8 +19,8 @@ try{
  console.log('Guest connected');await host.getByRole('combobox',{name:'Active leadership profile'}).getByRole('option',{name:'Test Partner'}).waitFor({state:'attached'});
  await guest.getByRole('button',{name:'＋ Add candidate',exact:true}).click();await guest.getByLabel('Candidate name',{exact:true}).fill('Fictional Option');await guest.getByLabel('Position / title',{exact:true}).fill('Manager');await guest.getByRole('button',{name:'Add candidate',exact:true}).click();
  await host.getByRole('button',{name:'Fictional Option Manager',exact:true}).waitFor();
- await host.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();await host.getByLabel('Board position').selectOption({label:'AA Knoxville — Manager'});await host.getByRole('button',{name:'Save changes'}).click();
- await guest.locator('[data-aff="knoxville"][data-role="Manager"]').getByRole('button',{name:'Fictional Candidate Manager',exact:true}).waitFor();
+ await host.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();await host.getByLabel('Board position').selectOption({label:'STAFF Roving Coaches — Manager'});await host.getByRole('button',{name:'Save changes'}).click();
+ await guest.locator('[data-aff="roving"][data-role="Manager"]').getByRole('button',{name:'Fictional Candidate Manager',exact:true}).waitFor();
  await guest.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();await guest.locator('#opinion').fill('A synthetic discussion note');await guest.getByRole('button',{name:'Save changes'}).click();await host.getByText('commented on Fictional Candidate: “A synthetic discussion note”',{exact:false}).waitFor();
  await guest.getByRole('button',{name:'Duplicate scenario',exact:true}).click();await guest.getByLabel('Scenario name').fill('Test alternative');await guest.getByRole('button',{name:'Create scenario',exact:true}).click();await host.getByRole('button',{name:'Test alternative',exact:true}).waitFor();
  await host.screenshot({path:'/private/tmp/coaching-live-session.png',fullPage:true});

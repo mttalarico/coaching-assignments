@@ -18,7 +18,7 @@ The repository includes the user-provided starting roster (managers and bench co
 
 ## Affiliates
 
-AAA Iowa Cubs, AA Knoxville Smokies, A+ South Bend Cubs, A Myrtle Beach Pelicans, AZL Arizona Cubs. Assets copied from the user's Leaderboard Master 2000 app. Arizona uses the Cubs mark. Initial titles are editable: Manager, Hitting Coach, Pitching Coach, Development Coach.
+AAA Iowa Cubs, AA Knoxville Smokies, A+ South Bend Cubs, A Myrtle Beach Pelicans, AZL Arizona Cubs, plus a Roving Coaches column for staff working across affiliates. Roving Coaches supports the same positions, candidate options, final selections, and live updates as the affiliate columns. Assets copied from the user's Leaderboard Master 2000 app. Arizona uses the Cubs mark. Initial titles are editable: Manager, Hitting Coach, Pitching Coach, Development Coach.
 
 The starting roster is applied once per saved board. Empty boards receive it directly; existing work is preserved and a separate Last year's roster scenario is added. All ten assignments remain open for discussion.
 
