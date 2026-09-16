@@ -14,7 +14,7 @@ A Cubs affiliate staffing whiteboard. Run `npm start`, then open http://localhos
 
 This first version stores data in localStorage on the current browser and origin. Profiles are attribution labels, not authenticated accounts. Separate browsers do not synchronize. Export backups before changing browsers or importing another board. Imported and exported boards contain candidate names and opinions.
 
-The repository includes the user-provided starting roster (managers and bench coaches). Subsequent browser edits are stored locally and are not committed. For shared online use, the next stage is authenticated leadership accounts, a shared database, access permissions, and server-recorded activity. GitHub is the source-sharing destination; no GitHub repository or deployment has been created yet. The destination owner is pending.
+The repository includes the user-provided starting roster (managers and bench coaches). Subsequent browser edits are stored locally and are not committed. Published through GitHub Pages under mttalarico/coaching-assignments. This is a lightweight brainstorming tool: each person works in their own browser copy and can export their ideas. Live synchronization and authenticated accounts are outside the current scope.
 
 ## Affiliates
 
@@ -25,7 +25,7 @@ The starting roster is applied once per saved board. Empty boards receive it dir
 ## GitHub Pages publishing
 
 Target repository: `mttalarico/coaching-assignments`.
-Expected website after deployment: https://mttalarico.github.io/coaching-assignments/
+Website: https://mttalarico.github.io/coaching-assignments/
 
 Create the repository, push this project to its main branch, then select **Settings → Pages → Source → GitHub Actions**. Run the **Publish coaching board** workflow (or push another change). The workflow publishes only `public/`.
 
