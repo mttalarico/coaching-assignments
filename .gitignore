@@ -4,3 +4,5 @@ node_modules/
 coaching-board-*.json
 .env*
 test-results/
+
+playwright-report/

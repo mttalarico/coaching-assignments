@@ -1,1 +1,1 @@
-{"name":"coaching-assignments","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.js","test":"node --test"}}
+{"name":"coaching-assignments","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.js","test":"node --test"},"dependencies":{"peerjs":"1.5.5"},"devDependencies":{"@playwright/test":"1.63.0"}}
