@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {makeInvite,parseInvite,inviteFromLocation} from './public/invite.js';
+const id='coaching-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+test('local-app invites point partners to the public website',()=>{for(const origin of ['http://localhost:3948/','http://127.0.0.1:3948/','http://[::1]:3948/']){const url=makeInvite(id,origin);assert.equal(new URL(url).origin,'https://mttalarico.github.io');assert.equal(new URL(url).pathname,'/coaching-assignments/');assert.equal(parseInvite(url),id);}});
+test('new query invites, old fragment invites, and pasted codes all work',()=>{for(const value of [id,makeInvite(id,'https://mttalarico.github.io/coaching-assignments/'),'https://mttalarico.github.io/coaching-assignments/#join='+id])assert.equal(parseInvite(value),id);assert.equal(inviteFromLocation('https://example.com/?join='+id),id);assert.equal(inviteFromLocation('https://example.com/#join='+id),id);});
+test('incomplete and ordinary website links are not session invites',()=>{for(const value of ['',null,'https://mttalarico.github.io/coaching-assignments/','coaching-123','https://example.com/?join=bad'])assert.equal(parseInvite(value),null);});

@@ -14,7 +14,7 @@ try{
  await host.getByRole('button',{name:'Live session',exact:true}).click();await host.getByRole('button',{name:'Start live session',exact:true}).click();
  await host.getByText('Live · 1 connected · Keep this tab open',{exact:true}).waitFor({timeout:30000});
  console.log('Host session started');await hc.grantPermissions(['clipboard-read','clipboard-write']);await host.getByRole('button',{name:'Copy invite link'}).click();const link=await host.evaluate(()=>navigator.clipboard.readText());
- console.log('Invite copied');await guest.goto(link);await guest.getByLabel('Your name / nickname').fill('Test Partner');await guest.getByRole('button',{name:'Join live session',exact:true}).click();
+ console.log('Invite copied');const testInvite=new URL('http://localhost:3948/');testInvite.search=new URL(link).search;await guest.goto(testInvite.href);await guest.getByLabel('Your name / nickname').fill('Test Partner');await guest.getByRole('button',{name:'Join live session',exact:true}).click();
  await guest.getByText('Live · Connected to shared board',{exact:true}).waitFor({timeout:30000});
  console.log('Guest connected');await host.getByRole('combobox',{name:'Active leadership profile'}).getByRole('option',{name:'Test Partner'}).waitFor({state:'attached'});
  await guest.getByRole('button',{name:'＋ Add candidate',exact:true}).click();await guest.getByLabel('Candidate name',{exact:true}).fill('Fictional Option');await guest.getByLabel('Position / title',{exact:true}).fill('Manager');await guest.getByRole('button',{name:'Add candidate',exact:true}).click();

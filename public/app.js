@@ -1,3 +1,4 @@
+import {parseInvite,inviteFromLocation} from './invite.js';
 import {LiveSession} from './live.js';
 import {affiliates,initial,uid,move,choose,validate,addLastYearRoster,reactionOptions,toggleReaction,reactionsFor} from './model.js';
 const $=s=>document.querySelector(s), esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -5,6 +6,7 @@ const key='cubs-coaching-v1';let state=initial(),active,profile='matt',dragged=n
 try{const raw=localStorage.getItem(key);if(raw)state=validate(JSON.parse(raw));profile=localStorage.getItem(key+'-profile')||state.profiles[0].id;}catch{setTimeout(()=>toast('Saved board could not be loaded. Import a backup to recover.'),100);}
 const rosterAdded = addLastYearRoster(state);
 if(!state.profiles.some(p=>p.id===profile))profile=state.profiles[0].id;active=rosterAdded ? state.scenarios[state.scenarios.length-1].id : state.scenarios[0].id;
+const hostSessionKey='cubs-host-session';
 let live, stateGeneration=0, personalState, unsentDraft, joiningName, reactionTarget;
 const board=()=>state.scenarios.find(s=>s.id===active), actor=()=>state.profiles.find(p=>p.id===profile).name;
 function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',4200);}
@@ -35,7 +37,7 @@ function downloadBoard(data,name){const url=URL.createObjectURL(new Blob([JSON.s
 live=new LiveSession({
   read:()=>state,
   receive:next=>{state=next;stateGeneration++;if(!state.scenarios.some(s=>s.id===active))active=state.scenarios[0].id;if(!state.profiles.some(p=>p.id===profile))profile=state.profiles[0].id;persist();if(joiningName){const name=joiningName;joiningName=null;let p=state.profiles.find(p=>p.name===name);if(!p){p={id:uid(),name};state.profiles.push(p);}profile=p.id;save();}},
-  status:message=>{$('#liveStatus').textContent=message;$('#liveStart').hidden=live.mode!=='off';$('#liveCopy').hidden=live.mode!=='host'||!live.ready;$('#liveLeave').hidden=live.mode==='off';},
+  status:message=>{$('#liveStatus').textContent=message;$('#liveStart').hidden=live.mode!=='off';$('#liveJoin').hidden=live.mode!=='off';$('#liveRetry').hidden=!live.failed;if(live.mode==='host'&&live.host){try{sessionStorage.setItem(hostSessionKey,live.host);}catch{}}$('#liveCopy').hidden=live.mode!=='host'||!live.ready;$('#liveLeave').hidden=live.mode==='off';},
   notice:toast,
   pending:value=>{document.body.classList.toggle('live-pending',value);},
   recovery:draft=>{unsentDraft=structuredClone(draft);$('#liveRecovery').hidden=false;}
@@ -45,7 +47,7 @@ $('#liveStart').onclick=()=>{
   modal('Brainstorm together', '<p>Share your current board in a live session. Your partner can move names, add candidates, and create scenarios with you.</p><p><b>Keep this tab open while you work together.</b> Anyone with the invite link can join and edit. Your partner’s own local board stays separate.</p>', '<button class="primary">Start live session</button>',()=>{close();live.start('host');});
 };
 $('#liveCopy').onclick=async()=>{try{await navigator.clipboard.writeText(live.link());toast('Invite link copied. Send it to your partner and keep this tab open.');}catch{modal('Session invite','<label for="inviteLink">Copy this link and send it to your partner</label><input id="inviteLink" readonly value="'+esc(live.link())+'">','<button class="primary">Done</button>',close);}};
-$('#liveLeave').onclick=()=>{const guest=live.mode==='guest';live.stop();joiningName=null;if(guest&&personalState){state=personalState;personalState=null;active=state.scenarios[0].id;if(!state.profiles.some(p=>p.id===profile))profile=state.profiles[0].id;stateGeneration++;persist();}history.replaceState(null,'',location.pathname+location.search);toast('Session closed. You are working locally.');};
+$('#liveLeave').onclick=()=>{try{sessionStorage.removeItem(hostSessionKey);}catch{}const guest=live.mode==='guest';live.stop();joiningName=null;if(guest&&personalState){state=personalState;personalState=null;active=state.scenarios[0].id;if(!state.profiles.some(p=>p.id===profile))profile=state.profiles[0].id;stateGeneration++;persist();}const cleanUrl=new URL(location.href);cleanUrl.hash='';cleanUrl.searchParams.delete('join');history.replaceState(null,'',cleanUrl);lastInvite=null;toast('Session closed. You are working locally.');};
 // While waiting for host confirmation, only session controls and exports remain available.
 document.addEventListener('click',e=>{if(!live.blocked)return;if(e.target.closest('.live-bar, #export, #close'))return;e.preventDefault();e.stopImmediatePropagation();toast('Live updates are paused. Wait for connection, or leave the session to work locally.');},true);
 document.addEventListener('dragstart',e=>{if(live.blocked){e.preventDefault();e.stopImmediatePropagation();}},true);
@@ -53,10 +55,26 @@ document.addEventListener('drop',e=>{if(live.blocked){e.preventDefault();e.stopI
 document.addEventListener('submit',e=>{if(live.blocked){e.preventDefault();e.stopImmediatePropagation();}},true);
 window.addEventListener('beforeunload',e=>{if(live.mode==='host'&&live.connections.size){e.preventDefault();e.returnValue='';}});
 if (rosterAdded) save(); else render();
-const invitedHost=new URLSearchParams(location.hash.slice(1)).get('join');
-if(invitedHost&&/^coaching-[a-f0-9-]{36}$/.test(invitedHost)){
-  modal('Join shared board', input('Your name / nickname','name')+'<p>You’ll see the host’s board and edit together. Your personal board stays separate. The host must keep their tab open.</p>', '<button class="primary">Join live session</button>', f=>{const name=f.get('name').trim();if(!name)return;personalState=structuredClone(state);joiningName=name;close();live.start('guest',invitedHost);});
+let lastInvite=null;
+function promptJoin(host){
+  if(live.mode!=='off') {toast('Leave your current session before joining a different one.');return;}
+  if($('#modal').open)close();
+  modal('Join shared board',input('Your name / nickname','name')+'<p>The host must have their live session open. Your personal board stays separate.</p>','<button class="primary">Join live session</button>',f=>{const name=f.get('name').trim();if(!name)return;personalState=structuredClone(state);joiningName=name;close();live.start('guest',host);});
 }
+function checkInvite(){
+  const raw=inviteFromLocation(location.href);
+  if(!raw||raw===lastInvite)return;
+  const host=parseInvite(raw);lastInvite=raw;
+  if(!host){toast('This invite is incomplete. Use Join session to paste the full invite or ask the host to copy it again.');return;}
+  if(live.mode==='host'&&live.host===host){toast('This is your own session. Send the invite to your partner.');return;}
+  promptJoin(host);
+}
+$('#liveJoin').onclick=()=>modal('Join a live session',input('Invite link or session code','invite')+'<p>Paste the full invite link your partner sent you.</p>','<button class="primary">Continue</button>',f=>{const host=parseInvite(f.get('invite'));if(!host){toast('Paste a complete invite link or a session code beginning with coaching-.');return;}close();promptJoin(host);});
+$('#liveRetry').onclick=()=>{const role=live.mode,host=live.host;if(role==='off')return;live.start(role,host);};
+window.addEventListener('hashchange',checkInvite);
+window.addEventListener('popstate',checkInvite);
+checkInvite();
+if(!inviteFromLocation(location.href)){let resume;try{resume=sessionStorage.getItem(hostSessionKey);}catch{}if(parseInvite(resume))live.start('host',resume);}
 
 function reactionSummary(scenario, target) {
   const summary = reactionOptions.map(([key,emoji]) => {

@@ -38,9 +38,9 @@ The website starts everyone with the provided roster. Use Live session → Start
 3. The partner opens it, enters a name/nickname, and clicks **Join live session**.
 4. Changes to candidates, placements, scenarios, notes, titles, and profiles synchronize. Each participant can view any scenario; choose the same scenario tab to see the same arrangement.
 
-Keep the host tab open. Closing or refreshing it ends the session; start a new session and send a fresh link next time. A heartbeat detects lost connections and pauses guest edits. Some restricted networks block WebRTC; use another network or exchange exported boards if connection fails. This is live collaboration while the host is online, not an always-online shared database.
+Keep the host tab open. Closing it or choosing Leave session ends the session; start a new session and send a fresh link next time. Refreshing the same host tab resumes its session ID; partners can use Retry connection when the host is back. A heartbeat detects lost connections and pauses guest edits. Some restricted networks block WebRTC; use another network or exchange exported boards if connection fails. This is live collaboration while the host is online, not an always-online shared database.
 
-PeerJS 1.5.5 is vendored in `public/vendor/` with its MIT license. Its public signaling service connects participants; board content travels through WebRTC data channels. Anyone holding the invite link can join and edit. Session IDs are random and carried in the URL fragment. Profile names are attribution labels, not verified identities.
+PeerJS 1.5.5 is vendored in `public/vendor/` with its MIT license. Its public signaling service connects participants; board content travels through WebRTC data channels. Anyone holding the invite link can join and edit. Session IDs are random and carried in the invite query parameter. Older fragment-style invites remain supported. Profile names are attribution labels, not verified identities.
 
 The host saves the shared result in their local board. Guests save the session under a separate browser-storage key; their personal board is restored when they leave. Export a session copy before leaving if you want to keep it as a file. Simultaneous independent edits are merged against their common starting state. Conflicting edits to the same item are rejected visibly, preserving the unsent draft for export. Forms opened before a remote update must be reopened before saving to prevent stale edits.
 
@@ -57,3 +57,11 @@ Each scenario has Like 👍, Dislike 👎, Love ❤️, Fire 🔥, Sick 🤘, an
 Whole-roster reactions remain above the board. Click **React** inside a position slot (for example, Iowa · Manager) to react specifically to that position's options. The feedback dialog shows each person's reactions, updates during live sessions, and lets you click again to remove your own reaction. Counts appear in that slot; they do not affect whole-roster reaction totals. Removing a position title clears feedback for the removed slot. Duplicated scenarios start with fresh feedback at both levels.
 
 The **Release** column is a single scenario-specific list of names under consideration. Drag a name there or select **Release — Under consideration** in its card editor. Move it back to an affiliate or Roving Coaches at any time. Release does not delete the person from the candidate list or affect other scenarios, does not count as a staffing position, and cannot be marked as a filled position. Its React button supports feedback on the release options together. Both features are included in exports and live updates.
+
+## Invite troubleshooting
+
+Invites copied from localhost now point to the published website, so partners can open them on their own computers. Open the invitation, or click **Join session** and paste the full link or its `coaching-...` session code. Both new query-style and older fragment-style invites are recognized, including when opening an old invite in an already-open tab.
+
+Keep the host's tab open. The same tab remembers its host session ID across refreshes using sessionStorage. If disconnected, click **Retry connection** after the host has returned. Closing the host tab or explicitly leaving ends the session. Errors distinguish an offline host from an unavailable connection service or an unsupported browser. These fixes do not guarantee connectivity on networks that block WebRTC or the signaling service.
+
+`node scripts/check-invites.mjs` checks public invite generation from localhost, legacy invites in existing tabs, manual joining, refresh/retry, and offline-host errors using fictional data. Set `BOARD_URL=https://mttalarico.github.io/coaching-assignments/` to check the deployed site in isolated browsers.
