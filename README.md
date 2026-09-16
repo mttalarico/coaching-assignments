@@ -51,3 +51,9 @@ The host saves the shared result in their local board. Guests save the session u
 ## Roster reactions
 
 Each scenario has Like 👍, Dislike 👎, Love ❤️, Fire 🔥, Sick 🤘, and Thinking 🤔 reactions. Select your leadership profile, then click one or more emojis. Click again to remove your reaction. Counts and names are visible to everyone in the live session, and scenario tabs show a reaction summary. Reactions stay with a scenario as it is edited; duplicating it starts fresh feedback. Reactions are included in exports and local/session saves. Older boards without reactions remain supported.
+
+## Position feedback and release options
+
+Whole-roster reactions remain above the board. Click **React** inside a position slot (for example, Iowa · Manager) to react specifically to that position's options. The feedback dialog shows each person's reactions, updates during live sessions, and lets you click again to remove your own reaction. Counts appear in that slot; they do not affect whole-roster reaction totals. Removing a position title clears feedback for the removed slot. Duplicated scenarios start with fresh feedback at both levels.
+
+The **Release** column is a single scenario-specific list of names under consideration. Drag a name there or select **Release — Under consideration** in its card editor. Move it back to an affiliate or Roving Coaches at any time. Release does not delete the person from the candidate list or affect other scenarios, does not count as a staffing position, and cannot be marked as a filled position. Its React button supports feedback on the release options together. Both features are included in exports and live updates.

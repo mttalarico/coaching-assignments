@@ -30,10 +30,27 @@ try{
  await guest.getByRole('button',{name:'Sick',exact:true}).click();
  await host.locator('.reaction-people').getByText('🤘 Test Partner',{exact:true}).waitFor({state:'hidden'});
  assert.equal(await guest.getByRole('button',{name:'Sick',exact:true}).getAttribute('aria-pressed'),'false');
+ // Position feedback stays separate from whole-roster feedback.
+ await guest.getByRole('button',{name:'React to Roving Coaches · Manager',exact:true}).click();
+ await guest.getByRole('dialog').getByRole('button',{name:'Like',exact:true}).click();
+ await host.getByRole('button',{name:'React to Roving Coaches · Manager',exact:true}).getByText('👍 1',{exact:true}).waitFor();
+ assert.equal(await host.locator('#reactions').getByRole('button',{name:'Like',exact:true}).locator('.reaction-count').textContent(),'0');
+ await guest.getByRole('dialog').getByRole('button',{name:'Done',exact:true}).click();
+ await host.getByRole('button',{name:'React to Roving Coaches · Manager',exact:true}).click();
+ await host.getByRole('dialog').getByText('👍 Test Partner',{exact:true}).waitFor();
+ await host.getByRole('dialog').getByRole('button',{name:'Done',exact:true}).click();
+ // Release can be proposed and reversed without losing the candidate or creating vacancies.
+ await host.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();
+ await host.getByLabel('Board position').selectOption({label:'Release — Under consideration'});await host.getByRole('button',{name:'Save changes'}).click();
+ await guest.locator('[data-aff="release"]').getByRole('button',{name:'Fictional Candidate Manager',exact:true}).waitFor();
+ assert.equal(await host.locator('#summary').textContent(),'0 / 12 positions decided');
+ await guest.getByRole('button',{name:'Fictional Candidate Manager',exact:true}).click();
+ await guest.getByLabel('Board position').selectOption({label:'AAA Iowa — Manager'});await guest.getByRole('button',{name:'Save changes'}).click();
+ await host.locator('[data-aff="iowa"][data-role="Manager"]').getByRole('button',{name:'Fictional Candidate Manager',exact:true}).waitFor();
  await guest.getByRole('button',{name:'Duplicate scenario',exact:true}).click();await guest.getByLabel('Scenario name').fill('Test alternative');await guest.getByRole('button',{name:'Create scenario',exact:true}).click();await host.getByRole('button',{name:'Test alternative',exact:true}).waitFor();
  await guest.getByText('No reactions yet. Give this option a little feedback.',{exact:true}).waitFor();
  await host.locator('.reaction-people').getByText('❤️ Test Host',{exact:true}).waitFor();
  await host.screenshot({path:'/private/tmp/coaching-live-session.png',fullPage:true});
  await host.close();await guest.getByText('Host disconnected · Changes paused.',{exact:false}).waitFor();assert.equal(errors.length,0,errors.join('\n'));
- console.log('PASS: real connection with fictional data, partner identity, candidate addition, move, opinion, reactions in both directions, reaction removal, duplicate without inherited votes, scenario, disconnect, no browser errors.');
+ console.log('PASS: real connection with fictional data, partner identity, candidate addition, move, opinion, reactions in both directions, reaction removal, position feedback, reversible Release placement, duplicate without inherited votes, scenario, disconnect, no browser errors.');
 }catch(e){console.log('Host status:',await host?.locator('#liveStatus').textContent().catch(()=>''));console.log('Guest status:',await guest?.locator('#liveStatus').textContent().catch(()=>''));console.log('Errors:',errors);throw e;}finally{await browser.close();}

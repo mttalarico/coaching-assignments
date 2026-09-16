@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {initial,addLastYearRoster,move,choose,validate} from './public/model.js';
+test('release is scenario-specific, reversible, and never deletes the candidate',()=>{const s=initial();addLastYearRoster(s);const b=s.scenarios[0],id=s.candidates[0].id;const alternative=structuredClone(b);alternative.id='alternative';s.scenarios.push(alternative);choose(b,id);move(s,b,id,'release','');assert.deepEqual(b.placements[id],{aff:'release',role:'',final:false});assert.equal(alternative.placements[id].aff,'iowa');assert.equal(s.candidates.length,10);assert.throws(()=>choose(b,id));validate(JSON.parse(JSON.stringify(s)));move(s,b,id,'iowa','Manager');validate(s);assert.equal(b.placements[id].aff,'iowa');});
