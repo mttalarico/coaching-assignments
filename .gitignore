@@ -6,3 +6,5 @@ coaching-board-*.json
 test-results/
 
 playwright-report/
+
+dist/

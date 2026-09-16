@@ -27,7 +27,7 @@ The starting roster is applied once per saved board. Empty boards receive it dir
 Target repository: `mttalarico/coaching-assignments`.
 Website: https://mttalarico.github.io/coaching-assignments/
 
-Create the repository, push this project to its main branch, then select **Settings → Pages → Source → GitHub Actions**. Run the **Publish coaching board** workflow (or push another change). The workflow publishes only `public/`.
+Create the repository, push this project to its main branch, then select **Settings → Pages → Source → GitHub Actions**. Run the **Publish coaching board** workflow (or push another change). The workflow runs `npm run build` (no dependency installation needed) and publishes `dist/`, generated from `public/`. Every module import, entry script, and stylesheet gets one content-based cache version so a refresh loads a consistent release.
 
 The website starts everyone with the provided roster. Use Live session → Start live session → Copy invite link to edit together, or Export board / Import board to exchange copies. The public site includes the starting roster. The noindex tag discourages search indexing but does not restrict access.
 
@@ -65,3 +65,5 @@ Invites copied from localhost now point to the published website, so partners ca
 Keep the host's tab open. The same tab remembers its host session ID across refreshes using sessionStorage. If disconnected, click **Retry connection** after the host has returned. Closing the host tab or explicitly leaving ends the session. Errors distinguish an offline host from an unavailable connection service or an unsupported browser. These fixes do not guarantee connectivity on networks that block WebRTC or the signaling service.
 
 `node scripts/check-invites.mjs` checks public invite generation from localhost, legacy invites in existing tabs, manual joining, refresh/retry, and offline-host errors using fictional data. Set `BOARD_URL=https://mttalarico.github.io/coaching-assignments/` to check the deployed site in isolated browsers.
+
+Live sessions now exchange protocol version 2. If either browser is running an older app, participants must refresh both pages and reconnect; incompatible data is not silently accepted. A rejected incoming snapshot produces a persistent explanation and Retry control instead of a transient invalid-update toast. No local boards are cleared by this update.

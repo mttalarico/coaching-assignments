@@ -18,10 +18,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
+      - name: Build consistent browser assets
+        run: node scripts/build-site.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
-          path: public
+          path: dist
       - name: Publish website
         id: deployment
         uses: actions/deploy-pages@v4

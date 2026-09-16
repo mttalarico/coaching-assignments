@@ -1,6 +1,7 @@
 import {makeInvite} from './invite.js';
 import {validate} from './model.js';
 import {mergeBoards} from './merge.js';
+export const LIVE_PROTOCOL = 2;
 const clone=x=>structuredClone(x);
 export class LiveSession {
   constructor({read,receive,status,notice,pending,recovery}) {Object.assign(this,{read,receive,status,notice,pending,recovery});this.mode='off';this.connections=new Map();this.base=null;this.waiting=false;this.ready=false;this.revision=0;}
@@ -12,7 +13,7 @@ export class LiveSession {
     let opened=false;
     const peer=this.peer=new window.Peer(role==='host'?this.host:undefined,{debug:0});
     this.timer=setTimeout(()=>this.fail('Could not connect. The host must keep their tab open. Click Retry connection. If it still fails, try another network or ask for a fresh invite.'),20000);
-    peer.on('open',id=>{if(this.peer!==peer)return;if(opened){this.failed=false;this.describe();return;}opened=true;if(role==='host'){clearTimeout(this.timer);this.host=id;this.base=clone(this.read());this.failed=false;this.ready=true;this.pending(false);this.describe();}else this.attach(peer.connect(host,{reliable:true,serialization:'json'}),false);});
+    peer.on('open',id=>{if(this.peer!==peer)return;if(opened){this.failed=false;this.describe();return;}opened=true;if(role==='host'){clearTimeout(this.timer);this.host=id;this.base=clone(this.read());this.failed=false;this.ready=true;this.pending(false);this.describe();}else this.attach(peer.connect(host,{reliable:true,serialization:'json',metadata:{protocol:LIVE_PROTOCOL}}),false);});
     peer.on('connection',conn=>{if(this.mode!=='host'){conn.close();return;}this.attach(conn,true);});
     peer.on('error',error=>{if(this.peer!==peer)return;const messages={
       'peer-unavailable':'Host is not online at this invite. Ask the host to open their live session, then click Retry connection.',
@@ -28,12 +29,13 @@ export class LiveSession {
     const sessionPeer=this.peer;
     let lastSeen=Date.now();
     const heartbeat=setInterval(()=>{if(this.peer!==sessionPeer){clearInterval(heartbeat);return;}if(!conn.open)return;if(Date.now()-lastSeen>12000){clearInterval(heartbeat);conn.close();return;}this.send(conn,{type:'ping'});},3000);
-    conn.on('open',()=>{if(this.peer!==sessionPeer){conn.close();return;}lastSeen=Date.now();if(hosting){this.connections.set(conn.peer,conn);this.describe();this.send(conn,{type:'snapshot',board:this.base,revision:this.revision});}});
+    conn.on('open',()=>{if(this.peer!==sessionPeer){conn.close();return;}lastSeen=Date.now();if(hosting){if(conn.metadata?.protocol!==LIVE_PROTOCOL){this.notice('Your partner has an older app open. Both people should refresh the board and use a fresh invite.');this.send(conn,{type:'incompatible'});setTimeout(()=>conn.close(),250);return;}this.connections.set(conn.peer,conn);this.describe();this.send(conn,{type:'snapshot',board:this.base,revision:this.revision});}});
     conn.on('data',msg=>{
       if(this.peer!==sessionPeer)return;
       lastSeen=Date.now();if(msg?.type==='ping'){this.send(conn,{type:'pong'});return;}if(msg?.type==='pong')return;
       try {
         if(!msg||JSON.stringify(msg).length>5_000_000)throw Error('Invalid message');
+        if(msg.type==='incompatible'||msg.protocol!==LIVE_PROTOCOL){if(hosting){this.send(conn,{type:'incompatible'});return;}this.fail('Different app versions · Both people must refresh the board, then start a fresh live session.');return;}
         if(hosting&&msg.type==='proposal'){
           try {const next=mergeBoards(msg.base,msg.board,this.base);this.base=clone(next);this.revision++;this.receive(clone(next));this.broadcast(msg.id);}
           catch(e){this.send(conn,{type:'conflict',board:this.base,revision:this.revision,ack:msg.id});}
@@ -43,12 +45,12 @@ export class LiveSession {
           if(msg.type==='conflict'){if(this.draft)this.recovery(this.draft);this.notice('Someone changed the same item. The latest board is shown; use Export unsent draft to keep your idea, then retry.');}
           this.waiting=false;this.draft=null;this.pending(false);this.describe();this.receive(clone(msg.board));
         }
-      }catch{this.notice('An invalid live update was ignored.');}
+      }catch(error){console.error('Live board update failed:',error);if(hosting){this.notice('Could not read your partner’s update. Both people should refresh the board.');}else{this.fail('Cannot load shared board · '+error.message+'. Export your local copy if needed, then refresh both browsers and reconnect.');}}
     });
-    const lost=()=>{clearInterval(heartbeat);if(this.peer!==sessionPeer)return;if(hosting){this.connections.delete(conn.peer);this.describe();}else if(this.mode==='guest')this.fail('Host disconnected · Changes paused. Keep the host tab open, then click Retry connection.');};
+    const lost=()=>{clearInterval(heartbeat);if(this.peer!==sessionPeer)return;if(hosting){this.connections.delete(conn.peer);this.describe();}else if(this.mode==='guest'&&!this.failed)this.fail('Host disconnected · Changes paused. Keep the host tab open, then click Retry connection.');};
     conn.on('close',lost);conn.on('error',lost);if(!hosting)this.connection=conn;
   }
-  send(conn,message){if(conn.open)conn.send(message);}
+  send(conn,message){if(conn.open)conn.send({...message,protocol:LIVE_PROTOCOL});}
   broadcast(ack){for(const conn of this.connections.values())this.send(conn,{type:'snapshot',board:this.base,revision:this.revision,ack});}
   publish(next){
     if(this.mode==='off')return;

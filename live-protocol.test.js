@@ -1,0 +1,6 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {LiveSession,LIVE_PROTOCOL} from './public/live.js';
+import {initial} from './public/model.js';
+function setup(){const handlers={},messages=[],statuses=[];const conn={open:true,peer:'test',on:(event,fn)=>handlers[event]=fn,send:msg=>messages.push(msg),close:()=>handlers.close?.()};const live=new LiveSession({read:initial,receive:()=>{},status:s=>statuses.push(s),notice:()=>{},pending:()=>{},recovery:()=>{}});live.mode='guest';live.peer={destroy:()=>conn.close()};live.attach(conn,false);return {live,conn,handlers,messages,statuses};}
+test('old snapshots give an actionable version error instead of silently hanging',()=>{const x=setup();try{x.handlers.data({type:'snapshot',board:initial(),revision:0});assert.equal(x.live.failed,true);assert.equal(x.live.ready,false);assert.match(x.statuses.at(-1),/Different app versions/);x.conn.close();assert.match(x.statuses.at(-1),/Different app versions/);}finally{x.conn.close();x.live.stop(false);}});
+test('matching protocol connects and versions outbound messages',()=>{const x=setup();try{x.handlers.data({type:'snapshot',protocol:LIVE_PROTOCOL,board:initial(),revision:0});assert.equal(x.live.ready,true);x.live.send(x.conn,{type:'ping'});assert.equal(x.messages.at(-1).protocol,LIVE_PROTOCOL);}finally{x.conn.close();x.live.stop(false);}});
