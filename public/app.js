@@ -8,6 +8,7 @@ const rosterAdded = addLastYearRoster(state);
 if(!state.profiles.some(p=>p.id===profile))profile=state.profiles[0].id;active=rosterAdded ? state.scenarios[state.scenarios.length-1].id : state.scenarios[0].id;
 const hostSessionKey='cubs-host-session';
 const unseenScenarios=new Set();
+const rosterNoteDrafts=new Map();
 let live, stateGeneration=0, personalState, unsentDraft, joiningName, reactionTarget;
 const board=()=>state.scenarios.find(s=>s.id===active), actor=()=>state.profiles.find(p=>p.id===profile).name;
 function toast(t){$('#toast').textContent=t;$('#toast').style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').style.display='none',4200);}
@@ -16,7 +17,7 @@ function persist(){try{localStorage.setItem(storageKey(),JSON.stringify(state));
 function save(){stateGeneration++;persist();if(live?.mode!=='off'&&live){try{live.publish(state);}catch(e){toast(e.message);}}}
 function log(text){board().events.unshift({actor:actor(),text,date:new Date().toISOString()});}
 function card(c){const p=board().placements[c.id];return `<button class="card ${p?.final?'final':''}" draggable="true" data-card="${esc(c.id)}"><strong>${esc(c.name)}</strong><small>${esc(c.title||'Position to discuss')}${p?.final?' · Final choice':''}</small></button>`;}
-function render(){updateScenarioSharing();const b=board();renderReactions(b);$('#profile').innerHTML=state.profiles.map(p=>`<option value="${esc(p.id)}" ${profile===p.id?'selected':''}>${esc(p.name)}</option>`).join('');$('#scenarios').innerHTML=state.scenarios.map(s=>`<button data-scenario="${esc(s.id)}" aria-label="${esc(s.name)}" title="${esc(s.createdBy?'Created by '+s.createdBy:s.name)}" class="${s.id===active?'active':''}">${esc(s.name)}${unseenScenarios.has(s.id)?'<span class="scenario-new" aria-hidden="true">NEW</span>':''}${reactionSummary(s)}</button>`).join('');$('#scenarioTitle').textContent=b.name;const finals=Object.values(b.placements).filter(p=>p.final).length;$('#summary').textContent=`${finals} / ${state.roles.length*affiliates.filter(a=>a[0]!=='release').length} positions decided`;const pool=state.candidates.filter(c=>!b.placements[c.id]||b.placements[c.id].aff==='pool');$('#poolCount').textContent=pool.length;const q=$('#search').value.toLowerCase();$('#pool').innerHTML=pool.filter(c=>(c.name+' '+c.title).toLowerCase().includes(q)).map(card).join('')||`<div class="empty-pool"><span>＋</span>${q?'No matching candidates':'A fresh board.<br>Add your first candidate.'}</div>`;
+function render(){updateScenarioSharing();const b=board();renderReactions(b);renderRosterNotes(b);$('#profile').innerHTML=state.profiles.map(p=>`<option value="${esc(p.id)}" ${profile===p.id?'selected':''}>${esc(p.name)}</option>`).join('');$('#scenarios').innerHTML=state.scenarios.map(s=>`<button data-scenario="${esc(s.id)}" aria-label="${esc(s.name)}" title="${esc(s.createdBy?'Created by '+s.createdBy:s.name)}" class="${s.id===active?'active':''}">${esc(s.name)}${unseenScenarios.has(s.id)?'<span class="scenario-new" aria-hidden="true">NEW</span>':''}${reactionSummary(s)}</button>`).join('');$('#scenarioTitle').textContent=b.name;const finals=Object.values(b.placements).filter(p=>p.final).length;$('#summary').textContent=`${finals} / ${state.roles.length*affiliates.filter(a=>a[0]!=='release').length} positions decided`;const pool=state.candidates.filter(c=>!b.placements[c.id]||b.placements[c.id].aff==='pool');$('#poolCount').textContent=pool.length;const q=$('#search').value.toLowerCase();$('#pool').innerHTML=pool.filter(c=>(c.name+' '+c.title).toLowerCase().includes(q)).map(card).join('')||`<div class="empty-pool"><span>＋</span>${q?'No matching candidates':'A fresh board.<br>Add your first candidate.'}</div>`;
 $('#board').style.setProperty('--column-count',affiliates.length);
 $('#board').innerHTML=affiliates.map(([id,level,name,club,color,logo=id])=>`<article class="affiliate ${id==='release'?'release-column':''}" style="--team:${color}"><div class="affiliate-head"><img src="assets/${logo}.png" alt="${name} ${club}"><div><div class="level">${level}</div><h2>${name}</h2><small>${club}</small></div></div>${(id==='release'?['']:state.roles).map(role=>{const cs=state.candidates.filter(c=>b.placements[c.id]?.aff===id&&b.placements[c.id]?.role===role);return `<div class="slot drop" data-aff="${id}" data-role="${esc(role)}"><div class="slot-title"><span>${id==='release'?'RELEASE OPTIONS':esc(role.toUpperCase())}</span><span>${cs.length||'—'}</span></div>${cs.map(card).join('')}${cs.length?'':`<button class="slot-empty" data-add-aff="${id}" data-add-role="${esc(role)}">＋ Add or drop candidate</button>`}${positionReactionControl(b,id,role)}</div>`;}).join('')}${id==='release'?'<p class="release-help">A scenario option. Move names back to any position at any time.</p>':''}</article>`).join('');
 if(reactionTarget&&$('#modal').open){if(reactionTarget.aff!=='release'&&!state.roles.includes(reactionTarget.role)){close();toast('That position was removed.');}else $('#fields').innerHTML=reactionPanel(b,reactionTarget);}
@@ -107,3 +108,24 @@ function updateScenarioSharing(){
   else if(!live.ready)el.textContent='Connecting — scenario sharing is paused until the session is live.';
   else el.textContent=`All ${state.scenarios.length} scenario tabs are shared with everyone in this session. Click any tab to explore it.`;
 }
+
+function renderRosterNotes(scenario){
+  $('#notesScenario').textContent=scenario.name;
+  $('#rosterNoteAuthor').textContent='Add a note as '+actor();
+  const draft=rosterNoteDrafts.get(scenario.id)||'';
+  if($('#rosterNoteText').value!==draft)$('#rosterNoteText').value=draft;
+  const notes=scenario.notes.filter(n=>!n.candidate);
+  $('#rosterNotesList').innerHTML=notes.length?notes.slice().reverse().map(n=>`<article class="roster-note"><div><b>${esc(n.actor)}</b><time datetime="${esc(n.date)}">${esc(new Date(n.date).toLocaleString())}</time></div><p>${esc(n.text)}</p></article>`).join(''):'<p class="muted">No roster notes yet. Add the first idea.</p>';
+}
+$('#rosterNoteText').oninput=e=>rosterNoteDrafts.set(active,e.target.value);
+$('#rosterNoteForm').onsubmit=e=>{
+  e.preventDefault();
+  if(live.blocked)return;
+  const text=$('#rosterNoteText').value.trim();
+  if(!text)return;
+  board().notes.push({id:uid(),actor:actor(),text,date:new Date().toISOString()});
+  log('added a roster note');
+  rosterNoteDrafts.delete(active);
+  save();
+  toast('Note added to '+board().name+'.');
+};
